@@ -104,6 +104,7 @@ public class NISTClean {
 				}
 				//DEBUG: Print Output
 				System.out.println("LaneID: " + laneID + ", zoneID: " + zoneID);
+				//Now actually set the config!
 				config.setInt(laneID, zoneID);
 			}
 
