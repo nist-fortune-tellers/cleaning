@@ -7,9 +7,11 @@ Read `detector_lane_inventory.csv` and for each line in the CSV, we get the `lan
 - Group by Zone ID
 - Parse Time
 - For Every Possible Placement in 10 minute range (ex. if I am 2:10, emit all time values between 2:05 and 2:15).
-   - emit(<zone_id,associated_time>, <data>)
+   - `emit(<zone_id,associated_time>, <data>)`
+
 #### Reducer
-- Retrieve <zone_id,associated_time> and Array of <data>s.
+
+- Retrieve `<zone_id,associated_time>` and Array of <data>s.
 - Create Array of 
    - Flow
    - Changed
