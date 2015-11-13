@@ -23,8 +23,8 @@ Read `detector_lane_inventory.csv` and for each line in the CSV, we get the `lan
       - Correct Flow to Median Value.
       - Set Changed = true
       - Set Reason to 2
-   - Emit(<lane_id,measurment_start>, <Flow,Changed,Reason>)
+   - `Emit(<lane_id,measurment_start>, <Flow,Changed,Reason>)`
 
 - Conslidate Everything
-- Sort By <lane_id>, then <measurment_start>, emit <Flow,Changed,Reason>
+- Sort By `<lane_id>, then <measurment_start>`, `emit <Flow,Changed,Reason>`
 
