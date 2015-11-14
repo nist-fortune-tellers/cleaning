@@ -20,65 +20,25 @@ import org.dom4j.DocumentHelper;
 public class SergioMapper 
 extends Mapper<Object, Text, Text, Text>{
 	
-	public void map(Object unneeded, Text txt, Context context) 
+	public void map(Object unneeded, Text lineText, Context context) 
 			throws IOException, InterruptedException {
-		
+		String line = lineText.toString();
 		//check for special case of being top line in file
-		
+		if (line.contains("lane_id,measurement_start,speed,flow,occupancy,quality")) {
+			//go ahead and exit, since this line doesn't matter.
+			return;
+		}
 		//if not, parse the line into an object!
-		Measurement measure = new Measurement(context.getConfiguration(), txt);
-		
-		
-		
-		String key = "";
-		String value = "";
-		context.write(new Text(key), new Text(value));  
+		Measurement measure = new Measurement(context.getConfiguration(), line);
+		//retrieve all of the relevant keys.
+		String[] keys = measure.getKeys();
+		//write them to the mapper.
+		for(String key : keys) {
+			context.write(new Text(key), lineText);
+		}
 	}
 }
 
-class Measurement {
-	
-	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-	
-	private String laneID;
-	private int zoneID;
-	private Calendar calendar;
-	
-	//Creates a Measurment object based off of a line.
-	public Measurement(Configuration config, Text lineText) {
-		String line = lineText.toString();
-		if (line.contains("lane_id,measurement_start,speed,flow,occupancy,quality")) {
-			//go ahead and exit, since this line doesn't matter.
-			throw new IllegalArgumentException("Is CSV Header Def Line");
-		}
-		
-		String[] splits = line.split(",");
-		//do a sanity check on the line. Make sure all the elements exist.
-		if (splits.length != 6) {
-			return;
-		}
-		
-		/* Retrieve Needed Values */
-		laneID = splits[0];
-		zoneID = config.getInt(laneID, -1);
-		//if the zone ID wasn't found, return.
-		if(zoneID == -1) {
-			throw new IllegalArgumentException("Zone ID not found.");
-		}
-		//let's now extract the date
-		//ex. 2006-09-01 00:00:07-04. 
-		//The below code cuts off the above example, to be an easily parsable string
-		// like 2006-09-01 00:00
-		String dateStr = splits[1].substring(0, 16);
-		Date date;
-		try {
-			date = sdf.parse(dateStr);
-		} catch (ParseException e) {
-			throw new IllegalArgumentException("Unable to Parse Date.");
-		}
-		calendar = GregorianCalendar.getInstance();
-		calendar.setTime(date);
-	}
-}
+
 
 
