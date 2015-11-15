@@ -2,40 +2,47 @@ package com.nistfortunetellers.cleaning;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 public class SergioReducer 
 extends Reducer<Text,Text,Text,Text> {
 
 	public void reduce(Text keyText, Iterable<Text> lineTexts, Context context) 
 			throws IOException, InterruptedException {
-		String key = keyText.toString();
+		//String key = keyText.toString();
 		
-		ArrayList<FlowSortableMeasurement> measures = new ArrayList<FlowSortableMeasurement>();
+		ArrayList<Measurement> outputMeasures = new ArrayList<Measurement>();
+		DescriptiveStatistics stats = new DescriptiveStatistics();
 
 		//Iterate Through Keys and make array.
 		for (Text lineText : lineTexts) {
 			String line = lineText.toString();
-			measures.add(new FlowSortableMeasurement(context.getConfiguration(), line));
+			//check if we're dealing with a special key!
+			if(line.contains(NISTClean.KEY_SPECIAL)) {
+				//remove key chars
+				line = line.substring(NISTClean.KEY_SPECIAL.length());
+				outputMeasures.add(new Measurement(context.getConfiguration(), line));
+				break;
+			}
+			Measurement measure = new Measurement(context.getConfiguration(), line);
+			//add the flow values to our stats
+			stats.addValue(measure.getFlow());
 		}
-		//sort the arraylist!
-		Collections.sort(measures);
+		
+		int median = (int)Math.round(stats.getPercentile(50));
+		double stdDev = stats.getStandardDeviation();
+		
+		for(Measurement outputMeasure : outputMeasures) {
+			int flow = outputMeasure.getFlow();
+			//if the flow is negative, or greater than one std devation away...
+			if(flow < 0 || flow > stdDev) {
+				//correct the value
+				outputMeasure.correctFlow(median, NISTClean.SERGIO_REASON);
+			}
+			context.write(outputMeasure.submissionKey(), outputMeasure.submisionValue());
+		}
 	}
-}
-
-class FlowSortableMeasurement extends Measurement implements Comparable<FlowSortableMeasurement> {
-
-	public FlowSortableMeasurement(Configuration config, String line) {
-		super(config, line);
-	}
-
-	@Override
-	public int compareTo(FlowSortableMeasurement o) {
-		return new Integer(getFlow()).compareTo(o.getFlow());
-	}
-
 }

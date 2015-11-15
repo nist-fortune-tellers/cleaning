@@ -1,21 +1,9 @@
 package com.nistfortunetellers.cleaning;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Mapper.Context;
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentHelper;
 
 public class SergioMapper 
 extends Mapper<Object, Text, Text, Text>{
@@ -30,8 +18,10 @@ extends Mapper<Object, Text, Text, Text>{
 		}
 		//if not, parse the line into an object!
 		Measurement measure = new Measurement(context.getConfiguration(), line);
+		//write the current item in a special way
+		context.write(measure.selfMapKey(), new Text(NISTClean.KEY_SPECIAL + line));
 		//retrieve all of the relevant keys.
-		String[] keys = measure.getKeys();
+		String[] keys = measure.timeKeys();
 		//write them to the mapper.
 		for(String key : keys) {
 			context.write(new Text(key), lineText);

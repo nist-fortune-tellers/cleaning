@@ -21,19 +21,10 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -45,8 +36,15 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 public class NISTClean {
 	
+	//in the future, will just be a folder, but for now it's an indiviual item.
+	public static final String INPUT_PATH = "data/test";
+	public static final String OUTPUT_TEMP_PATH = "temp";
+	public static final String OUTPUT_PATH = "output";
+	
 	public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm";
 	public static final String KEY_SEP = "*";
+	public static final String KEY_SPECIAL = "*";
+	public static final String SERGIO_REASON = "2";
 
 	private static final String LANE_ZONE_MAPPINGS = "data/detector_lane_inventory.csv";
 
@@ -54,9 +52,14 @@ public class NISTClean {
 		Configuration sergioCleanConfig = new Configuration();
 		//add laneID/zone Key/Val Pairs to config
 		addLaneIDsToConfig(sergioCleanConfig);
+		String file = "cleaning_test_06_11.csv";
+		String tempInput = INPUT_PATH + '/' + file;
+		String tempOutput = OUTPUT_TEMP_PATH + '/' + file;
+		runTextJob("Sergio Cleaning", sergioCleanConfig, tempInput, tempOutput, SergioMapper.class, SergioReducer.class);
 	}
 	
 	/** Runs a Job that is Text in and Out, and TextInput in and out, too! */
+	@SuppressWarnings({ "deprecation", "rawtypes" })
 	static void runTextJob(String jobName, Configuration jobConfig,
 			String inputPath, String outputPath,
 			Class<? extends Mapper> mapper, Class<? extends Reducer> reducer) {

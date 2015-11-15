@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.Text;
 
 class Measurement {
 	
@@ -16,7 +17,7 @@ class Measurement {
 	private int flow;
 	private Calendar calendar;
 	
-	private boolean flowChanged = false;
+	private boolean flowCorrected = false;
 	private String changedReason = "";
 	
 	//Creates a Measurment object based off of a line.
@@ -76,15 +77,45 @@ class Measurement {
 		return times;
 	}
 	
+	private String reducerKeyFromCalendar(Calendar calendar) {
+		return zoneID + NISTClean.KEY_SEP + df.format(calendar.getTime());
+	}
+	
+	/** Special Mapper key to identify self. */
+	public Text selfMapKey() {
+		return new Text(reducerKeyFromCalendar(calendar));
+	}
+	
 	//Returns all relevant keys for this object
-	public String[] getKeys() {
+	public String[] timeKeys() {
 		Calendar[] cals = getTimeRange();
 		String[] keys = new String[NUM_KEYS];
 		for(int i = 0; i != NUM_KEYS; ++i) {
 			//key format will be ZoneID<sep>Date
-			keys[i] = zoneID + NISTClean.KEY_SEP + df.format(cals[i].getTime());
+			keys[i] = reducerKeyFromCalendar(cals[i]);
 		}
 		return keys;
+	}
+	 
+		
+	public void correctFlow(int newFlow, String reason) {
+		flowCorrected = true;
+		changedReason = reason;
+		flow = newFlow;
+	}
+	
+	public Text submissionKey() {
+		return new Text(laneID + "\t" + df.format(calendar.getTime()));
+	}
+	
+	public Text submisionValue() {
+		int changedVal;
+		if(flowCorrected) {
+			changedVal = 0;
+		} else {
+			changedVal = 1;
+		}
+		return new Text(changedVal + "\t" + flow + "\t" + changedReason);
 	}
 	
 	public int getFlow() {
