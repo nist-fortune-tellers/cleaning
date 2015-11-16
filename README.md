@@ -1,5 +1,7 @@
 # Map-Reduce Algorithm Conversion!
-For best results, go to your eclipse workspace folder and "git clone" directly there!
+## Setup
+For best results, go to your eclipse workspace folder and "git clone" directly there! Eclipse should then automatically detetect the workspace.
+- For the input data, the `data/` directory in the workspace is a copy of (or reference to, if you're fancy) the `NIST-Data/core/lane_measurements` folder. You see the `detector_lane_inventory.csv` file there, which lines up with its placement in the NIST directory.
 ## Pre-MR
 Read `detector_lane_inventory.csv` and for each line in the CSV, we get the `lane_id` and `zone_id` and place it in the Hadoop Job as follows: `job.setLong(<lane_ID>, <zone_id>)`
 ## Map Reduceeeee
