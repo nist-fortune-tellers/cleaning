@@ -21,6 +21,13 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -78,9 +85,19 @@ public class NISTClean {
 			Path jobRaw = new Path(output);
 			FileSystem jobFS = jobRaw.getFileSystem(jobConf);
 			br = new BufferedReader(new FileReader(LANE_ZONE_MAPPINGS));
+			SimpleDateFormat sf = new SimpleDateFormat(DATE_FORMAT);
+			ArrayList<DateSorter> list = new ArrayList<DateSorter>();
 			while ((line = br.readLine()) != null) {
-				
-
+				list.add(new DateSorter(sf, line));
+			}
+			DateSorter[] arr = new DateSorter[list.size()];
+			Iterator<DateSorter> itr = list.iterator();
+			for(int i = 0; itr.hasNext(); ++i) {
+				arr[i] = itr.next();
+			}
+			Arrays.sort(arr);
+			for(DateSorter ds: arr) {
+				System.out.println(ds.toString());
 			}
 			
 		} catch (IOException e) {
@@ -181,4 +198,32 @@ public class NISTClean {
 		}
 
 	}
+}
+
+class DateSorter implements Comparable<Date> {
+	
+	String line;
+	Date date;
+	
+	public DateSorter(SimpleDateFormat df, String line) {
+		this.line = line;
+		String[] splits = line.split("\t");
+		try {
+			String dateStr = splits[1];
+			date = df.parse(dateStr);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public int compareTo(Date o) {
+		return date.compareTo(o);
+	}
+	
+	@Override
+	public String toString() {
+		return line;
+	}
+	
 }
