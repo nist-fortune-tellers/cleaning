@@ -24,13 +24,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.LineNumberReader;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -67,12 +63,12 @@ public class NISTClean {
 		Configuration sergioCleanConfig = new Configuration();
 		//add laneID/zone Key/Val Pairs to config
 		addLaneIDsToConfig(sergioCleanConfig);
+		//final String file = "cleaning_test_small_06_11.csv";
 		final String file = "cleaning_test_small_06_11.csv";
 		final String finalOutputFileName = DIR_OUTPUT + "/" + file.replace(".csv", "_NIST-3.txt").replace("test", "subm");		
 		String input = DIR_DETECTOR_FILES + '/' + file;
 		String tempOutput = DIR_TEMP + '/' + file;
 		String tempMergedOutput = DIR_TEMP + "/notsorted_" + file;
-		String finalOutput = DIR_OUTPUT + "/" + file;
 		runTextJob("Sergio Cleaning", sergioCleanConfig, input, tempOutput, SergioMapper.class, SergioReducer.class);
 		mergeOutput(sergioCleanConfig, tempOutput, tempMergedOutput);
 		sortOutput(tempMergedOutput, finalOutputFileName );
@@ -127,13 +123,19 @@ public class NISTClean {
 			// Finally write completed sorted file to 
 			bw = new BufferedWriter(new FileWriter(output));
 			for(DateSorter ds : arr) {
-				bw.write(ds.toString());
+				String[] splits = ds.toString().split("\t");
+				bw.write(splits[2]);
+				bw.write("\t");
+				bw.write(splits[3]);
+				if(splits.length == 5) {
+					bw.write("\t");
+					bw.write(splits[4]);
+				}
 				bw.newLine();
 			}
 			bw.close();
 			arr = null;
 
-			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}	
@@ -241,7 +243,6 @@ class DateSorter implements Comparable<DateSorter>  {
 	
 	public DateSorter(SimpleDateFormat df, String line) {
 		this.line = line;
-		System.out.println(line);
 		String[] splits = line.split("\t");
 		try {
 			String dateStr = splits[1];
