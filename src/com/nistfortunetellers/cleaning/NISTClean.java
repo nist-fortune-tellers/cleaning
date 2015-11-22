@@ -51,14 +51,14 @@ public class NISTClean {
 		final String DIR_TEMP = args[1];
 		final String DIR_OUTPUT = args[2];
 		LANE_ZONE_MAPPINGS = DIR_INPUT + "/detector_lane_inventory.csv";
-		final String DIR_DETECTOR_FILES = DIR_INPUT + "/test/";
+		final String DIR_DETECTOR_FILES = DIR_INPUT + "/test";
 		
 		//Job Setup
 		Configuration sergioCleanConfig = new Configuration();
 		//add laneID/zone Key/Val Pairs to config
 		addLaneIDsToConfig(sergioCleanConfig);
 		final String file = "cleaning_test_06_11.csv";
-		String input = DIR_INPUT + '/' + file;
+		String input = DIR_DETECTOR_FILES + '/' + file;
 		String tempOutput = DIR_TEMP + '/' + file;
 		runTextJob("Sergio Cleaning", sergioCleanConfig, input, tempOutput, SergioMapper.class, SergioReducer.class);
 	}
