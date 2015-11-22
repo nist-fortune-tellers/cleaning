@@ -68,7 +68,7 @@ public class NISTClean {
 		//add laneID/zone Key/Val Pairs to config
 		addLaneIDsToConfig(sergioCleanConfig);
 		final String file = "cleaning_test_small_06_11.csv";
-		final String finalOutputFileName = file.replace(".csv", "_NIST-3.txt").replace("test", "subm");		
+		final String finalOutputFileName = DIR_OUTPUT + "/" + file.replace(".csv", "_NIST-3.txt").replace("test", "subm");		
 		String input = DIR_DETECTOR_FILES + '/' + file;
 		String tempOutput = DIR_TEMP + '/' + file;
 		String tempMergedOutput = DIR_TEMP + "/notsorted_" + file;

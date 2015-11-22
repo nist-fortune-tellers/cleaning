@@ -38,7 +38,7 @@ extends Reducer<Text,Text,Text,Text> {
 		for(Measurement outputMeasure : outputMeasures) {
 			int flow = outputMeasure.getFlow();
 			//if the flow is negative, or greater than one std devation away...
-			if(flow < 0 || flow > stdDev) {
+			if(flow < 0 || Math.abs(median - flow) > stdDev ) {
 				//correct the value
 				outputMeasure.correctFlow(median, NISTClean.SERGIO_REASON);
 			}
