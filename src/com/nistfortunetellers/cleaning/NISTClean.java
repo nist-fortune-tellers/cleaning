@@ -60,7 +60,9 @@ public class NISTClean {
 		final String file = "cleaning_test_06_11.csv";
 		String input = DIR_DETECTOR_FILES + '/' + file;
 		String tempOutput = DIR_TEMP + '/' + file;
+		String tempMergedOutput = DIR_TEMP + "/presorted_" + file;
 		runTextJob("Sergio Cleaning", sergioCleanConfig, input, tempOutput, SergioMapper.class, SergioReducer.class);
+		mergeOutput(sergioCleanConfig, tempOutput, tempMergedOutput);
 	}
 	
 	/** Runs a Job that is Text in and Out, and TextInput in and out, too! */
