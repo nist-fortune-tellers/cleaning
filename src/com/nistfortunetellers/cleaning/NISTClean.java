@@ -58,13 +58,37 @@ public class NISTClean {
 		//add laneID/zone Key/Val Pairs to config
 		addLaneIDsToConfig(sergioCleanConfig);
 		final String file = "cleaning_test_06_11.csv";
+		final String finalOutputFileName = file.replace(".csv", "_NIST-3.txt").replace("test", "subm");
+
+		
 		String input = DIR_DETECTOR_FILES + '/' + file;
 		String tempOutput = DIR_TEMP + '/' + file;
 		String tempMergedOutput = DIR_TEMP + "/presorted_" + file;
+		String finalOutput = DIR_OUTPUT + "/" + file;
 		runTextJob("Sergio Cleaning", sergioCleanConfig, input, tempOutput, SergioMapper.class, SergioReducer.class);
 		mergeOutput(sergioCleanConfig, tempOutput, tempMergedOutput);
+		sortOutput(sergioCleanConfig, tempMergedOutput, finalOutputFileName );
 	}
 	
+	private static void sortOutput(Configuration jobConf, String input,
+			String output) {
+		BufferedReader br = null;
+		String line = "";
+		try {
+			Path jobRaw = new Path(output);
+			FileSystem jobFS = jobRaw.getFileSystem(jobConf);
+			br = new BufferedReader(new FileReader(LANE_ZONE_MAPPINGS));
+			while ((line = br.readLine()) != null) {
+				
+
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}	
+		
+	}
+
 	/** Runs a Job that is Text in and Out, and TextInput in and out, too! */
 	@SuppressWarnings({ "deprecation", "rawtypes" })
 	static void runTextJob(String jobName, Configuration jobConfig,
