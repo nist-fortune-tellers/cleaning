@@ -19,6 +19,7 @@ package com.nistfortunetellers.cleaning;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -45,35 +46,59 @@ public class NISTClean {
 	//in the future, will just be a folder, but for now it's an individual item.
 	
 	public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm";
-	public static final String KEY_SEP = "*";
+	public static final String KEY_SEP = "\t";
 	public static final String KEY_SPECIAL = "#";
 	public static final String SERGIO_REASON = "2";
 	
-	private static String LANE_ZONE_MAPPINGS = "";
+	private static String LANE_ZONE_MAPPINGS;
+	private static String DIR_INPUT;
+	private static String DIR_OUTPUT;
+	private static String DIR_TEMP;
+	private static String DIR_DETECTOR_FILES;
 
 	public static void main(String[] args) throws Exception {
 		//I/O Vars Setup
-		final String DIR_INPUT = args[0];
-		final String DIR_TEMP = args[1];
-		final String DIR_OUTPUT = args[2];
+		DIR_INPUT = args[0];
+		DIR_TEMP = args[1];
+		DIR_OUTPUT = args[2];
 		LANE_ZONE_MAPPINGS = DIR_INPUT + "/detector_lane_inventory.csv";
-		final String DIR_DETECTOR_FILES = DIR_INPUT + "/test";
-		
+		DIR_DETECTOR_FILES = DIR_INPUT + "/test";
 		//Job Setup
 		Configuration sergioCleanConfig = new Configuration();
 		//add laneID/zone Key/Val Pairs to config
 		addLaneIDsToConfig(sergioCleanConfig);
-		//final String file = "cleaning_test_small_06_11.csv";
-		final String file = "cleaning_test_small_06_11.csv";
+
+		File folder = new File(DIR_DETECTOR_FILES);
+		File[] listOfFiles = folder.listFiles();
+		System.out.println("Detected Files:");
+		for (File file: listOfFiles) {
+			String filename = file.getName();
+			if(!filename.contains(".csv")){
+				continue;
+			}
+			System.out.println(" - " + file.getName());
+		}
+
+		for (File file: listOfFiles) {
+			String filename = file.getName();
+			if(!filename.contains(".csv")){
+				continue;
+			}
+			System.out.println("Cleaning File: " + filename);
+			cleanFile(sergioCleanConfig, filename);
+		}
+	}
+	
+	private static void cleanFile(Configuration config, String file) {
 		final String finalOutputFileName = DIR_OUTPUT + "/" + file.replace(".csv", "_NIST-3.txt").replace("test", "subm");		
 		String input = DIR_DETECTOR_FILES + '/' + file;
 		String tempOutput = DIR_TEMP + '/' + file;
 		String tempMergedOutput = DIR_TEMP + "/notsorted_" + file;
-		runTextJob("Sergio Cleaning", sergioCleanConfig, input, tempOutput, SergioMapper.class, SergioReducer.class);
-		mergeOutput(sergioCleanConfig, tempOutput, tempMergedOutput);
+		runTextJob("Sergio Cleaning", config, input, tempOutput, SergioMapper.class, SergioReducer.class);
+		mergeOutput(config, tempOutput, tempMergedOutput);
 		sortOutput(tempMergedOutput, finalOutputFileName );
 	}
-	
+
 	private static void sortOutput(String input, String output) {
 		BufferedReader br = null;
 		BufferedWriter bw = null;
@@ -98,6 +123,10 @@ public class NISTClean {
 			br.close();
 			Arrays.sort(lane_arr);
 			
+			//Delete our original "notsorted" file
+			File file = new File(input);
+			file.delete();
+			
 			// Write file sorted by lane_id to output
 			bw = new BufferedWriter(new FileWriter(output));
 			for(LaneSorter ls : lane_arr) {
@@ -107,6 +136,7 @@ public class NISTClean {
 			bw.close();
 			lane_arr = null;
 
+			
 			
 			// Now sort by measurement_start
 			br = new BufferedReader(new FileReader(output));
@@ -120,7 +150,7 @@ public class NISTClean {
 			br.close();
 			Arrays.sort(arr);
 			
-			// Finally write completed sorted file to 
+			// Finally write completed sorted file to output dir
 			bw = new BufferedWriter(new FileWriter(output));
 			for(DateSorter ds : arr) {
 				String[] splits = ds.toString().split("\t");
@@ -171,12 +201,19 @@ public class NISTClean {
 		}
 	}
 
-	static FileSystem mergeOutput(Configuration jobConf, String input, String output) throws IOException {
-		Path jobRaw = new Path(input);
-		FileSystem jobFS = jobRaw.getFileSystem(jobConf);
-		Path jobMerge = new Path(output);
-		FileSystem jobMergeFS = jobRaw.getFileSystem(jobConf);
-		org.apache.hadoop.fs.FileUtil.copyMerge(jobFS, jobRaw, jobMergeFS, jobMerge, true, jobConf, "");
+	static FileSystem mergeOutput(Configuration jobConf, String input, String output) {
+		FileSystem jobMergeFS = null;
+		try {
+			Path jobRaw = new Path(input);
+			FileSystem jobFS = jobRaw.getFileSystem(jobConf);
+			Path jobMerge = new Path(output);
+			jobMergeFS = jobRaw.getFileSystem(jobConf);
+			org.apache.hadoop.fs.FileUtil.copyMerge(jobFS, jobRaw, jobMergeFS, jobMerge, true, jobConf, "");
+		}
+		catch(IOException e) {
+			e.printStackTrace();
+		}
+
 		return jobMergeFS;
 	}
 

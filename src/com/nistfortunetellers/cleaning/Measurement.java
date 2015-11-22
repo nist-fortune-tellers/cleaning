@@ -14,11 +14,7 @@ class Measurement {
 	private SimpleDateFormat df = new SimpleDateFormat(NISTClean.DATE_FORMAT);
 	private String laneID;
 	private int zoneID;
-	private int flow;
 	private Calendar calendar;
-	
-	private boolean flowCorrected = false;
-	private String changedReason = "";
 	
 	private static final int DEFAULT_ZONE = 999999;
 	
@@ -49,9 +45,6 @@ class Measurement {
 		}
 		calendar = GregorianCalendar.getInstance();
 		calendar.setTime(date);
-		/* Flow */
-		String flowStr = splits[3];
-		flow = Integer.parseInt(flowStr);
 	}
 	
 	private static final int NUM_KEYS = 11;
@@ -94,31 +87,6 @@ class Measurement {
 			keys[i] = reducerKeyFromCalendar(cals[i]);
 		}
 		return keys;
-	}
-	 
-		
-	public void correctFlow(int newFlow, String reason) {
-		flowCorrected = true;
-		changedReason = reason;
-		flow = newFlow;
-	}
-	
-	public Text submissionKey() {
-		return new Text(laneID + "\t" + df.format(calendar.getTime()));
-	}
-	
-	public Text submisionValue() {
-		int changedVal;
-		if(flowCorrected) {
-			changedVal = 0;
-		} else {
-			changedVal = 1;
-		}
-		return new Text(changedVal + "\t" + flow + "\t" + changedReason);
-	}
-	
-	public int getFlow() {
-		return flow;
 	}
 	
 }
