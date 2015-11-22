@@ -20,33 +20,32 @@ class Measurement {
 	private boolean flowCorrected = false;
 	private String changedReason = "";
 	
+	private static final int DEFAULT_ZONE = 999999;
+	
 	//Creates a Measurment object based off of a line.
 	public Measurement(Configuration config, String line) {
 		
 		String[] splits = line.split(",");
-		//do a sanity check on the line. Make sure all the elements exist.
-		if (splits.length != 6) {
-			return;
-		}
 		
 		/* Retrieve Needed Values */
 		/* Lane ID */
 		laneID = splits[0];
-		zoneID = config.getInt(laneID, -1);
-		//if the zone ID wasn't found, return.
-		if(zoneID == -1) {
-			throw new IllegalArgumentException("Zone ID not found.");
-		}
+		//Get the Zone ID, putting it into a default if not found.
+		zoneID = config.getInt(laneID, DEFAULT_ZONE);
 		/* Date */
 		// ex. 2006-09-01 00:00:07-04. 
 		//The below code cuts off the above example, to be an easily parsable string
 		//like 2006-09-01 00:00
-		String dateStr = splits[1].substring(0, 16);
 		Date date;
 		try {
+			String dateStr = splits[1].substring(0, 16);
 			date = df.parse(dateStr);
+		} catch (IndexOutOfBoundsException e) {
+			date = new Date();
+			//throw new IllegalArgumentException("Unable to Parse Date.");
 		} catch (ParseException e) {
-			throw new IllegalArgumentException("Unable to Parse Date.");
+			date = new Date();
+			//throw new IllegalArgumentException("Unable to Parse Date.");
 		}
 		calendar = GregorianCalendar.getInstance();
 		calendar.setTime(date);

@@ -36,14 +36,14 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 public class NISTClean {
 	
-	//in the future, will just be a folder, but for now it's an indiviual item.
+	//in the future, will just be a folder, but for now it's an individual item.
 	public static final String INPUT_PATH = "data/test";
 	public static final String OUTPUT_TEMP_PATH = "temp";
 	public static final String OUTPUT_PATH = "output";
 	
 	public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm";
 	public static final String KEY_SEP = "*";
-	public static final String KEY_SPECIAL = "*";
+	public static final String KEY_SPECIAL = "#";
 	public static final String SERGIO_REASON = "2";
 
 	private static final String LANE_ZONE_MAPPINGS = "data/detector_lane_inventory.csv";
@@ -65,6 +65,9 @@ public class NISTClean {
 			Class<? extends Mapper> mapper, Class<? extends Reducer> reducer) {
 		try {
 			Job genericJob = new Job(jobConfig, jobName);
+			// DEBUG
+			//genericJob.setNumReduceTasks(0);
+			// END DEBUG
 			genericJob.setJarByClass(NISTClean.class);
 			genericJob.setOutputKeyClass(Text.class);
 			genericJob.setOutputValueClass(Text.class);
@@ -119,7 +122,7 @@ public class NISTClean {
 						zoneID = Integer.parseInt(splits[1]);
 					} catch (NumberFormatException e) {
 						//If format doesn't work out so well, no worries. Just skip.
-						System.out.println("--Skipped line Line: " + line.replace('\n', ' '));
+						//System.out.println("--Skipped line Line: " + line.replace('\n', ' '));
 						continue;
 					}
 				} else {

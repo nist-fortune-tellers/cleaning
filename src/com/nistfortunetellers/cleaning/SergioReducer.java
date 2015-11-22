@@ -25,7 +25,7 @@ extends Reducer<Text,Text,Text,Text> {
 				//remove key chars
 				line = line.substring(NISTClean.KEY_SPECIAL.length());
 				outputMeasures.add(new Measurement(context.getConfiguration(), line));
-				break;
+				continue;
 			}
 			Measurement measure = new Measurement(context.getConfiguration(), line);
 			//add the flow values to our stats
