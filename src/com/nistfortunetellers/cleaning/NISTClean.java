@@ -18,9 +18,12 @@
 package com.nistfortunetellers.cleaning;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.LineNumberReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -64,41 +67,72 @@ public class NISTClean {
 		Configuration sergioCleanConfig = new Configuration();
 		//add laneID/zone Key/Val Pairs to config
 		addLaneIDsToConfig(sergioCleanConfig);
-		final String file = "cleaning_test_06_11.csv";
-		final String finalOutputFileName = file.replace(".csv", "_NIST-3.txt").replace("test", "subm");
-
-		
+		final String file = "cleaning_test_small_06_11.csv";
+		final String finalOutputFileName = file.replace(".csv", "_NIST-3.txt").replace("test", "subm");		
 		String input = DIR_DETECTOR_FILES + '/' + file;
 		String tempOutput = DIR_TEMP + '/' + file;
-		String tempMergedOutput = DIR_TEMP + "/presorted_" + file;
+		String tempMergedOutput = DIR_TEMP + "/notsorted_" + file;
 		String finalOutput = DIR_OUTPUT + "/" + file;
 		runTextJob("Sergio Cleaning", sergioCleanConfig, input, tempOutput, SergioMapper.class, SergioReducer.class);
 		mergeOutput(sergioCleanConfig, tempOutput, tempMergedOutput);
-		sortOutput(sergioCleanConfig, tempMergedOutput, finalOutputFileName );
+		sortOutput(tempMergedOutput, finalOutputFileName );
 	}
 	
-	private static void sortOutput(Configuration jobConf, String input,
-			String output) {
+	private static void sortOutput(String input, String output) {
 		BufferedReader br = null;
+		BufferedWriter bw = null;
 		String line = "";
 		try {
-			Path jobRaw = new Path(output);
-			FileSystem jobFS = jobRaw.getFileSystem(jobConf);
-			br = new BufferedReader(new FileReader(LANE_ZONE_MAPPINGS));
+			br = new BufferedReader(new FileReader(input));
+			// Get the number of lines in the file
+			LineNumberReader  lnr = new LineNumberReader(new FileReader(input));
+			lnr.skip(Long.MAX_VALUE);
+			int numberOfLines = lnr.getLineNumber(); //Add 1 because line index starts at 0
+			// Finally, the LineNumberReader object should be closed to prevent resource leak
+			lnr.close();	
+			
+			System.out.println("The number of lines is : " + numberOfLines);
+			
+			
+			LaneSorter[] lane_arr = new LaneSorter[numberOfLines];
+			for(int i = 0; i != numberOfLines; ++i) {
+				line = br.readLine();
+				lane_arr[i] = new LaneSorter(line);
+			}
+			br.close();
+			Arrays.sort(lane_arr);
+			
+			// Write file sorted by lane_id to output
+			bw = new BufferedWriter(new FileWriter(output));
+			for(LaneSorter ls : lane_arr) {
+				bw.write(ls.toString());
+				bw.newLine();
+			}
+			bw.close();
+			lane_arr = null;
+
+			
+			// Now sort by measurement_start
+			br = new BufferedReader(new FileReader(output));
 			SimpleDateFormat sf = new SimpleDateFormat(DATE_FORMAT);
-			ArrayList<DateSorter> list = new ArrayList<DateSorter>();
-			while ((line = br.readLine()) != null) {
-				list.add(new DateSorter(sf, line));
+						
+			DateSorter[] arr = new DateSorter[numberOfLines];
+			for(int i = 0; i != numberOfLines; ++i) {
+				line = br.readLine();
+				arr[i] = new DateSorter(sf, line);
 			}
-			DateSorter[] arr = new DateSorter[list.size()];
-			Iterator<DateSorter> itr = list.iterator();
-			for(int i = 0; itr.hasNext(); ++i) {
-				arr[i] = itr.next();
-			}
+			br.close();
 			Arrays.sort(arr);
-			for(DateSorter ds: arr) {
-				System.out.println(ds.toString());
+			
+			// Finally write completed sorted file to 
+			bw = new BufferedWriter(new FileWriter(output));
+			for(DateSorter ds : arr) {
+				bw.write(ds.toString());
+				bw.newLine();
 			}
+			bw.close();
+			arr = null;
+
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -200,13 +234,14 @@ public class NISTClean {
 	}
 }
 
-class DateSorter implements Comparable<Date> {
+class DateSorter implements Comparable<DateSorter>  {
 	
 	String line;
 	Date date;
 	
 	public DateSorter(SimpleDateFormat df, String line) {
 		this.line = line;
+		System.out.println(line);
 		String[] splits = line.split("\t");
 		try {
 			String dateStr = splits[1];
@@ -217,10 +252,41 @@ class DateSorter implements Comparable<Date> {
 	}
 
 	@Override
-	public int compareTo(Date o) {
-		return date.compareTo(o);
+	public int compareTo(DateSorter o) {
+		return date.compareTo(o.getDate());
 	}
 	
+	public Date getDate() {
+		return date;
+	}
+
+	@Override
+	public String toString() {
+		return line;
+	}
+	
+}
+
+class LaneSorter implements Comparable<LaneSorter> {
+	
+	String line;
+	Integer lane_id;
+	
+	public LaneSorter(String line) {
+		this.line = line;
+		String[] splits = line.split("\t");
+		lane_id = Integer.parseInt(splits[0]);
+	}
+
+	@Override
+	public int compareTo(LaneSorter o) {
+		return lane_id.compareTo(o.getLaneID());
+	}
+	
+	public int getLaneID() {
+		return lane_id;
+	}
+
 	@Override
 	public String toString() {
 		return line;
