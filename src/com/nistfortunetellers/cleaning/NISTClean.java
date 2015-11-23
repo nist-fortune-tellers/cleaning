@@ -114,20 +114,23 @@ public class NISTClean {
 			
 			System.out.println("The number of lines is : " + numberOfLines);
 			
-			
 			LaneSorter[] lane_arr = new LaneSorter[numberOfLines];
+			System.out.println("Reading in notsorted File.");
 			for(int i = 0; i != numberOfLines; ++i) {
 				line = br.readLine();
 				lane_arr[i] = new LaneSorter(line);
 			}
 			br.close();
+			System.out.println("Sorting by Lanes.");
 			Arrays.sort(lane_arr);
 			
 			//Delete our original "notsorted" file
+			System.out.println("Deleting Original File.");
 			File file = new File(input);
 			file.delete();
 			
 			// Write file sorted by lane_id to output
+			System.out.println("Writing Sorted Lanes to File.");
 			bw = new BufferedWriter(new FileWriter(output));
 			for(LaneSorter ls : lane_arr) {
 				bw.write(ls.toString());
@@ -141,16 +144,18 @@ public class NISTClean {
 			// Now sort by measurement_start
 			br = new BufferedReader(new FileReader(output));
 			SimpleDateFormat sf = new SimpleDateFormat(DATE_FORMAT);
-						
+			System.out.println("Reading in Sorted Lanes.");
 			DateSorter[] arr = new DateSorter[numberOfLines];
 			for(int i = 0; i != numberOfLines; ++i) {
 				line = br.readLine();
 				arr[i] = new DateSorter(sf, line);
 			}
 			br.close();
+			System.out.println("Sorting Lines by Date.");
 			Arrays.sort(arr);
 			
 			// Finally write completed sorted file to output dir
+			System.out.println("Writing Finished Product.");
 			bw = new BufferedWriter(new FileWriter(output));
 			for(DateSorter ds : arr) {
 				String[] splits = ds.toString().split("\t");
@@ -165,6 +170,7 @@ public class NISTClean {
 			}
 			bw.close();
 			arr = null;
+			System.out.println("Done!");
 
 		} catch (IOException e) {
 			e.printStackTrace();
