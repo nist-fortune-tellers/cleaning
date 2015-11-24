@@ -93,10 +93,10 @@ public class NISTClean {
 		final String finalOutputFileName = DIR_OUTPUT + "/" + file.replace(".csv", "_NIST-3.txt").replace("test", "subm");		
 		String input = DIR_DETECTOR_FILES + '/' + file;
 		String tempOutput = DIR_TEMP + '/' + file;
-		String tempMergedOutput = DIR_TEMP + "/notsorted_" + file;
+		String tempMergedOutput = DIR_OUTPUT + "/notsorted_" + file;
 		runTextJob("Sergio Cleaning", config, input, tempOutput, SergioMapper.class, SergioReducer.class);
 		mergeOutput(config, tempOutput, tempMergedOutput);
-		sortOutput(tempMergedOutput, finalOutputFileName );
+		//sortOutput(tempMergedOutput, finalOutputFileName );
 	}
 
 	private static void sortOutput(String input, String output) {
