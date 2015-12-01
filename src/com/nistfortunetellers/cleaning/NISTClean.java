@@ -18,16 +18,11 @@
 package com.nistfortunetellers.cleaning;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.LineNumberReader;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
