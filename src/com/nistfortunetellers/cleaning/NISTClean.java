@@ -38,7 +38,8 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 public class NISTClean {
 	
-	//in the future, will just be a folder, but for now it's an individual item.
+	//Run In Reverse does the largest files first when set.
+	public static final boolean RUN_IN_REVERSE = true;
 	
 	public static final String DATE_FORMAT = "yyyy-MM-dd HH:mm";
 	public static final String KEY_SEP = "\t";
@@ -64,10 +65,24 @@ public class NISTClean {
 		addLaneIDsToConfig(sergioCleanConfig);
 
 		File folder = new File(DIR_DETECTOR_FILES);
-		File[] listOfFiles = folder.listFiles();
-		Arrays.sort(listOfFiles);
+		File[] files = folder.listFiles();
+		Arrays.sort(files);
+		
+		//Swap the file order if necessary
+		if(RUN_IN_REVERSE) {
+			int size = files.length;
+			int halfSize = files.length/2;
+			for(int i=0; i!=halfSize; ++i) {
+				int endIndex = size-i-1;
+				File first = files[i];
+				File last = files[endIndex];
+				files[i]=last;
+				files[endIndex]=first;
+			}
+		}
+		
 		System.out.println("Detected Files:");
-		for (File file: listOfFiles) {
+		for (File file: files) {
 			String filename = file.getName();
 			if(!filename.contains(".csv")){
 				continue;
@@ -75,7 +90,7 @@ public class NISTClean {
 			System.out.println(" - " + file.getName());
 		}
 
-		for (File file: listOfFiles) {
+		for (File file: files) {
 			String filename = file.getName();
 			if(!filename.contains(".csv")){
 				continue;
