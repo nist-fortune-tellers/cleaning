@@ -52,7 +52,7 @@ public class NISTClean {
 	
 	private static String LANE_ZONE_MAPPINGS;
 	private static String DIR_INPUT;
-	private static String DIR_OUTPUT;
+	private static String DIR_UNSORTED;
 	private static String DIR_TEMP;
 	private static String DIR_DETECTOR_FILES;
 
@@ -60,7 +60,7 @@ public class NISTClean {
 		//I/O Vars Setup
 		DIR_INPUT = args[0];
 		DIR_TEMP = args[1];
-		DIR_OUTPUT = args[2];
+		DIR_UNSORTED = args[2];
 		LANE_ZONE_MAPPINGS = DIR_INPUT + "/detector_lane_inventory.csv";
 		DIR_DETECTOR_FILES = DIR_INPUT + "/test";
 		//Job Setup
@@ -70,6 +70,7 @@ public class NISTClean {
 
 		File folder = new File(DIR_DETECTOR_FILES);
 		File[] listOfFiles = folder.listFiles();
+		Arrays.sort(listOfFiles);
 		System.out.println("Detected Files:");
 		for (File file: listOfFiles) {
 			String filename = file.getName();
@@ -90,92 +91,11 @@ public class NISTClean {
 	}
 	
 	private static void cleanFile(Configuration config, String file) {
-		final String finalOutputFileName = DIR_OUTPUT + "/" + file.replace(".csv", "_NIST-3.txt").replace("test", "subm");		
 		String input = DIR_DETECTOR_FILES + '/' + file;
 		String tempOutput = DIR_TEMP + '/' + file;
-		String tempMergedOutput = DIR_TEMP + "/notsorted_" + file;
+		String mergedOutput = DIR_UNSORTED + "/unsorted_" + file;
 		runTextJob("Sergio Cleaning", config, input, tempOutput, SergioMapper.class, SergioReducer.class);
-		mergeOutput(config, tempOutput, tempMergedOutput);
-		sortOutput(tempMergedOutput, finalOutputFileName );
-	}
-	
-	private static void sortOutput(String input, String output) {
-		BufferedReader br = null;
-		BufferedWriter bw = null;
-		String line = "";
-		try {
-			br = new BufferedReader(new FileReader(input));
-			// Get the number of lines in the file
-			LineNumberReader  lnr = new LineNumberReader(new FileReader(input));
-			lnr.skip(Long.MAX_VALUE);
-			int numberOfLines = lnr.getLineNumber(); //Add 1 because line index starts at 0
-			// Finally, the LineNumberReader object should be closed to prevent resource leak
-			lnr.close();	
-			
-			System.out.println("The number of lines is : " + numberOfLines);
-			
-			LaneSorter[] lane_arr = new LaneSorter[numberOfLines];
-			System.out.println("Reading in notsorted File.");
-			for(int i = 0; i != numberOfLines; ++i) {
-				line = br.readLine();
-				lane_arr[i] = new LaneSorter(line);
-			}
-			br.close();
-			System.out.println("Sorting by Lanes.");
-			Arrays.sort(lane_arr);
-			
-			//Delete our original "notsorted" file
-			System.out.println("Deleting Original File.");
-			File file = new File(input);
-			file.delete();
-			
-			// Write file sorted by lane_id to output
-			System.out.println("Writing Sorted Lanes to File.");
-			bw = new BufferedWriter(new FileWriter(output));
-			for(LaneSorter ls : lane_arr) {
-				bw.write(ls.toString());
-				bw.newLine();
-			}
-			bw.close();
-			lane_arr = null;
-
-			
-			
-			// Now sort by measurement_start
-			br = new BufferedReader(new FileReader(output));
-			SimpleDateFormat sf = new SimpleDateFormat(DATE_FORMAT);
-			System.out.println("Reading in Sorted Lanes.");
-			DateSorter[] arr = new DateSorter[numberOfLines];
-			for(int i = 0; i != numberOfLines; ++i) {
-				line = br.readLine();
-				arr[i] = new DateSorter(sf, line);
-			}
-			br.close();
-			System.out.println("Sorting Lines by Date.");
-			Arrays.sort(arr);
-			
-			// Finally write completed sorted file to output dir
-			System.out.println("Writing Finished Product.");
-			bw = new BufferedWriter(new FileWriter(output));
-			for(DateSorter ds : arr) {
-				String[] splits = ds.toString().split("\t");
-				bw.write(splits[2]);
-				bw.write("\t");
-				bw.write(splits[3]);
-				if(splits.length == 5) {
-					bw.write("\t");
-					bw.write(splits[4]);
-				}
-				bw.newLine();
-			}
-			bw.close();
-			arr = null;
-			System.out.println("Done!");
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}	
-		
+		mergeOutput(config, tempOutput, mergedOutput);
 	}
 
 	/** Runs a Job that is Text in and Out, and TextInput in and out, too! */
@@ -277,63 +197,4 @@ public class NISTClean {
 		}
 
 	}
-}
-
-class DateSorter implements Comparable<DateSorter>  {
-	
-	String line;
-	Date date;
-	
-	public DateSorter(SimpleDateFormat df, String line) {
-		this.line = line;
-		String[] splits = line.split("\t");
-		try {
-			String dateStr = splits[1];
-			date = df.parse(dateStr);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
-	public int compareTo(DateSorter o) {
-		return date.compareTo(o.getDate());
-	}
-	
-	public Date getDate() {
-		return date;
-	}
-
-	@Override
-	public String toString() {
-		return line;
-	}
-	
-}
-
-class LaneSorter implements Comparable<LaneSorter> {
-	
-	String line;
-	Integer lane_id;
-	
-	public LaneSorter(String line) {
-		this.line = line;
-		String[] splits = line.split("\t");
-		lane_id = Integer.parseInt(splits[0]);
-	}
-
-	@Override
-	public int compareTo(LaneSorter o) {
-		return lane_id.compareTo(o.getLaneID());
-	}
-	
-	public int getLaneID() {
-		return lane_id;
-	}
-
-	@Override
-	public String toString() {
-		return line;
-	}
-	
 }
