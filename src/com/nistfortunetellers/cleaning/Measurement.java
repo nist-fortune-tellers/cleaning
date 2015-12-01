@@ -55,13 +55,14 @@ class Measurement {
 		Calendar[] times = new Calendar[NUM_KEYS];
 		//add the unmodified time
 		times[0] = (Calendar) calendar.clone();
+
 		for(int i = 1; i != NUM_KEYS; ++i) {
 			Calendar cal = (Calendar) calendar.clone();
 			int minsToAdd = 0;
-			if(i <= 5) {
+			if(i <= NUM_KEYS/2) {
 				minsToAdd = i;
 			} else {
-				minsToAdd = (i - 5) * -1;
+				minsToAdd = (i - NUM_KEYS/2) * -1;
 			}
 			cal.add(Calendar.MINUTE, minsToAdd);
 			times[i] = cal;
@@ -81,8 +82,8 @@ class Measurement {
 	//Returns all relevant keys for this object
 	public String[] timeKeys() {
 		Calendar[] cals = getTimeRange();
-		String[] keys = new String[NUM_KEYS];
-		for(int i = 0; i != NUM_KEYS; ++i) {
+		String[] keys = new String[cals.length];
+		for(int i = 0; i != cals.length; ++i) {
 			//key format will be ZoneID<sep>Date
 			keys[i] = reducerKeyFromCalendar(cals[i]);
 		}

@@ -61,7 +61,7 @@ class ReducedMeasurement {
 		this.date = date;
 		String[] splits = line.split(",");
 		laneID = splits[0];
-		flow = Integer.parseInt(splits[2]);
+		flow = Integer.parseInt(splits[3]);
 	}
 	
 	public int getFlow() {
